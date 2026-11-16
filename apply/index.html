@@ -103,7 +103,7 @@
     <p class="err" id="err">Please fill out every field.</p>
   </form>
 
-  <div class="done" id="done"><b>Got it.</b>Thanks for applying. If it's a fit, you'll hear from me on Instagram.</div>
+  <div class="done" id="done">Thanks for taking the time to apply. If you're a fit you'll be hearing from us.</div>
 
 </main>
 <script>
@@ -171,6 +171,7 @@
       await fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(new FormData(f)) });
       f.style.display = 'none';
       document.querySelector('.intro').style.display = 'none';
+      document.querySelector('.head').style.display = 'none';
       $('done').style.display = 'block';
       window.scrollTo(0, 0);
     } catch (x) {
