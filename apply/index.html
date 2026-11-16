@@ -42,6 +42,7 @@
   textarea { min-height:84px; resize:vertical; line-height:1.45; }
     .q:focus-within label.t i { color:var(--accent); }
   .checks { padding-left:0; display:flex; flex-direction:column; gap:10px; }
+  .q.bad .checks input { border-color:#ff6b6b; }
   .checks label { display:flex; align-items:center; gap:10px; font-size:15px; cursor:pointer; }
   .checks input { appearance:none; width:14px; height:14px; border:1px solid var(--text); border-radius:0; cursor:pointer; flex:none; }
   .checks input:checked { background:var(--accent); border-color:var(--accent); }
@@ -127,6 +128,21 @@
     tracks: () => cleanTracks($('tracks').value) !== null,
   };
   const setBad = (id, bad) => $(id).closest('.q').classList.toggle('bad', bad);
+  const qs = [...f.querySelectorAll('.q')];
+  qs.forEach(q => { if (!q.querySelector('.fe')) { const m = document.createElement('p'); m.className = 'fe req'; m.textContent = 'This one is required.'; q.appendChild(m); } });
+  const isEmpty = q => {
+    const box = q.querySelector('input[type=checkbox]');
+    if (box) return !q.querySelector('input[type=checkbox]:checked');
+    const el = q.querySelector('input, select, textarea'); return !el.value.trim();
+  };
+  const markEmpty = q => {
+    const empty = isEmpty(q), fe = q.querySelector('.fe');
+    if (empty) { fe.dataset.orig = fe.dataset.orig || fe.textContent; fe.textContent = 'This one is required.'; q.classList.add('bad'); }
+    else if (fe.dataset.orig) { fe.textContent = fe.dataset.orig; }
+    return empty;
+  };
+  qs.forEach(q => q.addEventListener('input', () => { if (q.classList.contains('bad') && !isEmpty(q)) { markEmpty(q); const id = q.querySelector('input,select,textarea').id; if (!checks[id] || checks[id]()) q.classList.remove('bad'); } }));
+  qs.forEach(q => q.addEventListener('change', () => { if (q.classList.contains('bad') && !isEmpty(q)) { const id = q.querySelector('input,select,textarea').id; if (!checks[id] || checks[id]()) q.classList.remove('bad'); } }));
 
   // once a field is flagged, clear it the moment it's fixed
   Object.keys(checks).forEach(id => {
@@ -140,9 +156,10 @@
     let anyBad = false;
     Object.keys(checks).forEach(id => { const ok = checks[id](); setBad(id, !ok); if (!ok) anyBad = true; });
     const t = cleanTracks($('tracks').value); if (t) $('tracks').value = t;
-    const missing = [...f.querySelectorAll('[required]')].some(el => !el.value.trim()) || !f.querySelector('input[name=building]:checked');
+    let missing = false;
+    qs.forEach(q => { if (markEmpty(q)) missing = true; });
     if (missing || anyBad) {
-      err.textContent = anyBad ? 'Fix the fields marked in red.' : 'Please fill out every field.';
+      err.textContent = 'Fix the fields marked in red.';
       err.style.display = 'block';
       const first = f.querySelector('.q.bad'); if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
