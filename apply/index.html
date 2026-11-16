@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DEVELOPED // Mentorship</title>
 <meta property="og:title" content="DEVELOPED // Mentorship">
+<meta property="og:description" content="Apply for 1:1 mentorship.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://listen.andherarecs.com/apply/">
+<meta property="og:image" content="https://listen.andherarecs.com/apply/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://listen.andherarecs.com/apply/og.jpg">
 <style>
   :root { --bg:#0b0b0b; --text:#f4f4f4; --muted:#8a8a8a; --accent:#f2e400; --line:#3a3a3a; }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -84,21 +92,42 @@
 <script>
   const ENDPOINT = "https://script.google.com/macros/s/AKfycbx0tlG0IJF2sCejSK0rkYoU2N0Gzsr1cwiVp2AU4gIYhevhk76Ov76dPZVe7EA-O6Y8kQ/exec";
   const f = document.getElementById('f'), btn = document.getElementById('btn'), err = document.getElementById('err');
+  const $ = id => document.getElementById(id);
+
+  function cleanTracks(raw) {
+    const m = raw.match(/(https?:\/\/)?[^\s]*(soundcloud\.com|dropbox\.com|db\.tt)[^\s]*/i);
+    if (!m) return null;
+    let t = m[0].replace(/[),.;!]+$/, '');
+    if (!/^https?:\/\//i.test(t)) t = 'https://' + t;
+    try {
+      const u = new URL(t), host = u.hostname.toLowerCase();
+      if (!/(^|\.)(soundcloud\.com|dropbox\.com|db\.tt)$/.test(host)) return null;
+      if (u.pathname.replace(/\/+$/, '').length < 2) return null;
+      return t;
+    } catch (_) { return null; }
+  }
+  const checks = {
+    email: () => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test($('email').value.trim()),
+    phone: () => { const v = $('phone').value.trim(), d = v.replace(/\D/g, ''); return /^\+?[\d\s().-]+$/.test(v) && d.length >= 10 && d.length <= 15; },
+    tracks: () => cleanTracks($('tracks').value) !== null,
+  };
+  const setBad = (id, bad) => $(id).closest('.q').classList.toggle('bad', bad);
+
+  // once a field is flagged, clear it the moment it's fixed
+  Object.keys(checks).forEach(id => {
+    $(id).addEventListener('input', () => { if ($(id).closest('.q').classList.contains('bad') && checks[id]()) setBad(id, false); });
+    $(id).addEventListener('blur', () => { if ($(id).value.trim()) setBad(id, !checks[id]()); });
+  });
+  f.addEventListener('input', () => { if (err.style.display === 'block' && !f.querySelector('.q.bad')) err.style.display = 'none'; });
+
   f.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const setBad = (id, bad) => document.getElementById(id).closest('.q').classList.toggle('bad', bad);
-    const email = document.getElementById('email'), phone = document.getElementById('phone'), tracks = document.getElementById('tracks');
-    const digits = phone.value.replace(/\D/g, '');
-    const phoneOk = /^\+?[\d\s().-]+$/.test(phone.value.trim()) && digits.length >= 10 && digits.length <= 15;
-    let t = tracks.value.trim(); if (t && !/^https?:\/\//i.test(t)) t = 'https://' + t;
-    let host = ''; try { host = new URL(t).hostname.toLowerCase(); } catch (_) {}
-    const tracksOk = /(^|\.)(soundcloud\.com|dropbox\.com)$/.test(host) || host === 'on.soundcloud.com';
-    const emailOk = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email.value.trim());
-    setBad('email', !emailOk); setBad('phone', !phoneOk); setBad('tracks', !tracksOk);
-    if (tracksOk) tracks.value = t;
+    let anyBad = false;
+    Object.keys(checks).forEach(id => { const ok = checks[id](); setBad(id, !ok); if (!ok) anyBad = true; });
+    const t = cleanTracks($('tracks').value); if (t) $('tracks').value = t;
     const missing = [...f.querySelectorAll('[required]')].some(el => !el.value.trim()) || !f.querySelector('input[name=building]:checked');
-    if (missing || !emailOk || !phoneOk || !tracksOk) {
-      err.textContent = missing ? 'Please fill out every field.' : 'Fix the fields marked in red.';
+    if (missing || anyBad) {
+      err.textContent = anyBad ? 'Fix the fields marked in red.' : 'Please fill out every field.';
       err.style.display = 'block';
       const first = f.querySelector('.q.bad'); if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
@@ -108,7 +137,7 @@
     try {
       await fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(new FormData(f)) });
       f.style.display = 'none';
-      document.getElementById('done').style.display = 'block';
+      $('done').style.display = 'block';
       window.scrollTo(0, 0);
     } catch (x) {
       btn.disabled = false; btn.textContent = 'SUBMIT';
