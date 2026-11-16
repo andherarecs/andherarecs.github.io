@@ -51,7 +51,8 @@
   button { background:var(--accent); color:#0b0b0b; border:0; border-radius:0; padding:16px; width:100%; font:inherit; font-weight:800; letter-spacing:.12em; font-size:14px; cursor:pointer; white-space:nowrap; }
   button:disabled { opacity:.6; cursor:wait; }
   .err { color:#ff6b6b; font-size:12px; margin-top:14px; display:none; }
-  .done { display:none; margin-top:40px; font-size:15px; line-height:1.6; }
+  .done { display:none; margin-top:28px; font-size:16px; line-height:1.6; }
+  .done b { font-size:28px; display:block; margin-bottom:8px; }
   .done b { color:var(--accent); font-weight:700; }
   footer { margin-top:60px; font-size:11px; color:var(--muted); letter-spacing:.08em; }
 </style>
@@ -102,7 +103,7 @@
     <p class="err" id="err">Please fill out every field.</p>
   </form>
 
-  <div class="done" id="done"><b>Got it.</b><br>Thanks for applying. If it's a fit, you'll hear from me on Instagram.</div>
+  <div class="done" id="done"><b>Got it.</b>Thanks for applying. If it's a fit, you'll hear from me on Instagram.</div>
 
 </main>
 <script>
@@ -169,6 +170,7 @@
     try {
       await fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', body: new URLSearchParams(new FormData(f)) });
       f.style.display = 'none';
+      document.querySelector('.intro').style.display = 'none';
       $('done').style.display = 'block';
       window.scrollTo(0, 0);
     } catch (x) {
