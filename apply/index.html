@@ -22,7 +22,11 @@
     width:100%; background:#F3EEDC; border:1px solid #F3EEDC; color:#0b0b0b; font:inherit; font-size:16px; padding:13px 14px; outline:none; border-radius:0; }
   input:focus, select:focus, textarea:focus { border-color:var(--accent); }
   input::placeholder, textarea::placeholder { color:#9a9a9a; }
-  select { appearance:none; cursor:pointer; }
+  select { appearance:none; cursor:pointer; padding-right:40px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%230b0b0b' stroke-width='2'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 16px center; }
+  select:invalid { color:#9a9a9a; }
+  .fe { color:#ff6b6b; font-size:12px; margin-top:6px; display:none; }
+  .q.bad input, .q.bad select, .q.bad textarea { border-color:#ff6b6b; }
+  .q.bad .fe { display:block; }
   select option { background:#F3EEDC; color:#0b0b0b; }
   textarea { min-height:84px; resize:vertical; line-height:1.45; }
     .q:focus-within label.t i { color:var(--accent); }
@@ -46,17 +50,17 @@
 
   <form id="f" novalidate>
     <div class="q"><label class="t" for="name">Name / artist name</label><input id="name" name="name" type="text" required></div>
-    <div class="q"><label class="t" for="email">Email</label><input id="email" name="email" type="email" required></div>
-    <div class="q"><label class="t" for="phone">Phone</label><input id="phone" name="phone" type="tel" required></div>
+    <div class="q"><label class="t" for="email">Email</label><input id="email" name="email" type="email" required><p class="fe">Enter a valid email.</p></div>
+    <div class="q"><label class="t" for="phone">Phone</label><input id="phone" name="phone" type="tel" placeholder="+1 201 555 0123" required><p class="fe">Enter a real phone number. Include your country code if you're outside the US (e.g. +44).</p></div>
     <div class="q"><label class="t" for="instagram">Instagram</label><input id="instagram" name="instagram" type="text" placeholder="@" required></div>
     <div class="q"><label class="t" for="years">How long have you been producing?</label>
       <select id="years" name="years" required>
-        <option value="" disabled selected>Select ↓</option>
+        <option value="" disabled selected>Select</option>
         <option>Less than 1 year</option><option>1–2 years</option><option>3–5 years</option><option>5+ years</option>
       </select></div>
     <div class="q"><label class="t" for="tracks">Your music</label>
       <small>One link to a private SoundCloud playlist or Dropbox folder with 2–3 tracks</small>
-      <input id="tracks" name="tracks" type="url" placeholder="https://" required></div>
+      <input id="tracks" name="tracks" type="text" inputmode="url" autocapitalize="off" placeholder="soundcloud.com/... or dropbox.com/..." required><p class="fe">Has to be a SoundCloud or Dropbox link.</p></div>
     <div class="q"><label class="t" for="now">Where are you at right now, and what's holding you back?</label><textarea id="now" name="now" required></textarea></div>
     <div class="q"><label class="t" for="goal">Where do you want to be in 12 months?</label><textarea id="goal" name="goal" required></textarea></div>
     <div class="q"><label class="t">What are you interested in building?</label>
@@ -82,8 +86,23 @@
   const f = document.getElementById('f'), btn = document.getElementById('btn'), err = document.getElementById('err');
   f.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const setBad = (id, bad) => document.getElementById(id).closest('.q').classList.toggle('bad', bad);
+    const email = document.getElementById('email'), phone = document.getElementById('phone'), tracks = document.getElementById('tracks');
+    const digits = phone.value.replace(/\D/g, '');
+    const phoneOk = /^\+?[\d\s().-]+$/.test(phone.value.trim()) && digits.length >= 10 && digits.length <= 15;
+    let t = tracks.value.trim(); if (t && !/^https?:\/\//i.test(t)) t = 'https://' + t;
+    let host = ''; try { host = new URL(t).hostname.toLowerCase(); } catch (_) {}
+    const tracksOk = /(^|\.)(soundcloud\.com|dropbox\.com)$/.test(host) || host === 'on.soundcloud.com';
+    const emailOk = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email.value.trim());
+    setBad('email', !emailOk); setBad('phone', !phoneOk); setBad('tracks', !tracksOk);
+    if (tracksOk) tracks.value = t;
     const missing = [...f.querySelectorAll('[required]')].some(el => !el.value.trim()) || !f.querySelector('input[name=building]:checked');
-    if (missing) { err.style.display = 'block'; return; }
+    if (missing || !emailOk || !phoneOk || !tracksOk) {
+      err.textContent = missing ? 'Please fill out every field.' : 'Fix the fields marked in red.';
+      err.style.display = 'block';
+      const first = f.querySelector('.q.bad'); if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     err.style.display = 'none';
     btn.disabled = true; btn.textContent = 'SENDING...';
     try {
