@@ -91,9 +91,9 @@
         <option value="" disabled selected>Select</option>
         <option>Yes</option><option>No</option>
       </select></div>
-    <div class="q" id="tracksQ"><label class="t" for="tracks">Your music</label>
+    <div class="q" id="tracksQ"><label class="t" for="tracks">Your music <span style="color:var(--muted);font-weight:400">(skip if you're not a producer)</span></label>
       <small>One link to a private SoundCloud playlist or Dropbox folder with 2–3 tracks</small>
-      <input id="tracks" name="tracks" type="text" inputmode="url" autocapitalize="off" placeholder="soundcloud.com/... or dropbox.com/..." required><p class="fe">Has to be a SoundCloud or Dropbox link.</p></div>
+      <input id="tracks" name="tracks" type="text" inputmode="url" autocapitalize="off" placeholder="soundcloud.com/... or dropbox.com/..."><p class="fe">Has to be a SoundCloud or Dropbox link.</p></div>
     <div class="q"><label class="t" for="now">Where are you at right now, and what's holding you back?</label><textarea id="now" name="now" required></textarea></div>
     <div class="q"><label class="t" for="goal">Where do you want to be in 12 months?</label><textarea id="goal" name="goal" required></textarea></div>
 
@@ -138,13 +138,13 @@
   const checks = {
     email: () => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test($('email').value.trim()),
     phone: () => { const v = $('phone').value.trim(), d = v.replace(/\D/g, ''); return /^\+?[\d\s().-]+$/.test(v) && d.length >= 10 && d.length <= 15; },
-    tracks: () => !isProducer() || cleanTracks($('tracks').value) !== null,
+    tracks: () => !$('tracks').value.trim() || cleanTracks($('tracks').value) !== null,
   };
   const setBad = (id, bad) => $(id).closest('.q').classList.toggle('bad', bad);
   const qs = [...f.querySelectorAll('.q')];
   qs.forEach(q => { if (!q.querySelector('.fe')) { const m = document.createElement('p'); m.className = 'fe req'; m.textContent = 'This one is required.'; q.appendChild(m); } });
   const isEmpty = q => {
-    if (q.style.display === 'none') return false;
+    if (q.style.display === 'none' || q.id === 'tracksQ') return false;
     const box = q.querySelector('input[type=checkbox]');
     if (box) return !q.querySelector('input[type=checkbox]:checked');
     const el = q.querySelector('input, select, textarea'); return !el.value.trim();
