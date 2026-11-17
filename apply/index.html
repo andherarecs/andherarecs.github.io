@@ -73,29 +73,29 @@
     <div class="q"><label class="t" for="email">Email</label><input id="email" name="email" type="email" required><p class="fe">Enter a valid email.</p></div>
     <div class="q"><label class="t" for="phone">Phone</label><input id="phone" name="phone" type="tel" placeholder="+1 201 555 0123" required><p class="fe">Enter a real phone number. Include your country code if you're outside the US (e.g. +44).</p></div>
     <div class="q"><label class="t" for="instagram">Instagram</label><input id="instagram" name="instagram" type="text" placeholder="@" required></div>
-    <div class="q"><label class="t" for="years">How long have you been producing?</label>
+    <div class="q"><label class="t">What are you interested in building?</label>
+      <small>This isn't just for producers. It's for artists, promoters and label owners too. Check all that apply.</small>
+      <div class="checks">
+        <label><input type="checkbox" name="building" value="Artist career">Artist / producer career</label>
+        <label><input type="checkbox" name="building" value="Starting a label">Starting or growing a label</label>
+        <label><input type="checkbox" name="building" value="Promoter / events company">Promoting / an events company</label>
+        <label><input type="checkbox" name="building" value="Not sure yet">Not sure yet</label>
+      </div></div>
+    <div class="q"><label class="t" for="years">Are you a producer? If so, how long have you been producing?</label>
       <select id="years" name="years" required>
         <option value="" disabled selected>Select</option>
-        <option>Less than 1 year</option><option>1–2 years</option><option>3–5 years</option><option>5+ years</option>
+        <option>I'm not a producer</option><option>Less than 1 year</option><option>1–2 years</option><option>3–5 years</option><option>5+ years</option>
       </select></div>
     <div class="q"><label class="t" for="attended">Have you attended DEVELOPED before?</label>
       <select id="attended" name="attended" required>
         <option value="" disabled selected>Select</option>
         <option>Yes</option><option>No</option>
       </select></div>
-    <div class="q"><label class="t" for="tracks">Your music</label>
+    <div class="q" id="tracksQ"><label class="t" for="tracks">Your music</label>
       <small>One link to a private SoundCloud playlist or Dropbox folder with 2–3 tracks</small>
       <input id="tracks" name="tracks" type="text" inputmode="url" autocapitalize="off" placeholder="soundcloud.com/... or dropbox.com/..." required><p class="fe">Has to be a SoundCloud or Dropbox link.</p></div>
     <div class="q"><label class="t" for="now">Where are you at right now, and what's holding you back?</label><textarea id="now" name="now" required></textarea></div>
     <div class="q"><label class="t" for="goal">Where do you want to be in 12 months?</label><textarea id="goal" name="goal" required></textarea></div>
-    <div class="q"><label class="t">What are you interested in building?</label>
-      <small>Check all that apply</small>
-      <div class="checks">
-        <label><input type="checkbox" name="building" value="Artist career">Artist career</label>
-        <label><input type="checkbox" name="building" value="Starting a label">Starting a label</label>
-        <label><input type="checkbox" name="building" value="Events / events company">Events / events company</label>
-        <label><input type="checkbox" name="building" value="Not sure yet">Not sure yet</label>
-      </div></div>
 
     <div class="q"><label class="t" for="invest">This is a 3-month commitment and a paid program. Are you in a position to invest in yourself right now?</label>
       <select id="invest" name="invest" required>
@@ -129,15 +129,22 @@
       return t;
     } catch (_) { return null; }
   }
+  const isProducer = () => $('years').value !== "I'm not a producer";
+  const syncTracks = () => {
+    const show = isProducer(); $('tracksQ').style.display = show ? '' : 'none';
+    if (!show) { $('tracks').value = ''; $('tracksQ').classList.remove('bad'); }
+  };
+  $('years').addEventListener('change', syncTracks);
   const checks = {
     email: () => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test($('email').value.trim()),
     phone: () => { const v = $('phone').value.trim(), d = v.replace(/\D/g, ''); return /^\+?[\d\s().-]+$/.test(v) && d.length >= 10 && d.length <= 15; },
-    tracks: () => cleanTracks($('tracks').value) !== null,
+    tracks: () => !isProducer() || cleanTracks($('tracks').value) !== null,
   };
   const setBad = (id, bad) => $(id).closest('.q').classList.toggle('bad', bad);
   const qs = [...f.querySelectorAll('.q')];
   qs.forEach(q => { if (!q.querySelector('.fe')) { const m = document.createElement('p'); m.className = 'fe req'; m.textContent = 'This one is required.'; q.appendChild(m); } });
   const isEmpty = q => {
+    if (q.style.display === 'none') return false;
     const box = q.querySelector('input[type=checkbox]');
     if (box) return !q.querySelector('input[type=checkbox]:checked');
     const el = q.querySelector('input, select, textarea'); return !el.value.trim();
